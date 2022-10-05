@@ -20,7 +20,7 @@ run curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o 
 sudo echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(source /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 run apt update -y
 run apt upgrade -y
-run apt install -y ros-$ROS_DISTRO-desktop
+run apt install -y ros-$ROS_DISTRO-desktop python3-roslaunch
 source "$ROS_HOME/setup.bash"
 run sudo chown -R "$USER:$USER" "$ROS_HOME"
 echo "Updating $HOME/.bashrc"
