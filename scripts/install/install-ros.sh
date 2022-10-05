@@ -22,7 +22,7 @@ sudorun apt update -y
 sudorun apt upgrade -y
 sudorun apt install -y ros-$ROS_DISTRO-desktop
 source "$ROS_HOME/setup.bash"
-sudorun sudo chown -R "$USER:$USER" "$ROS_HOME"
+sudorun chown -R "$USER:$USER" "$ROS_HOME"
 echo "Updating $HOME/.bashrc"
 sed -r -i '/ROS_HOME|ROS_DISTRO/d' ~/.bashrc
 echo "export ROS_HOME=\"$ROS_HOME\"" >> ~/.bashrc
