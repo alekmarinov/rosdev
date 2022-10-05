@@ -40,7 +40,7 @@ if [ ! -d /etc/ros/rosdep/sources.list.d/ ]; then
     sudorun rosdep init
 fi
 
-sudorun rosdep update
+run rosdep update
 sudorun apt update -y
 sudorun apt dist-upgrade -y
 sudorun apt install -y \
@@ -59,7 +59,7 @@ sudorun apt install -y \
   wget \
   clang-format
 
-run colcon mixin remove default
+colcon mixin remove default
 run colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml
 run colcon mixin update default
 
@@ -86,8 +86,8 @@ run rm -rf moveit2_tutorials
 run git clone https://github.com/ros-planning/moveit2_tutorials -b $ROS_DISTRO --depth 1
 run vcs import --force < moveit2_tutorials/moveit2_tutorials.repos
 sudorun apt update -y 
-sudorun rosdep update
-sudorun rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+run rosdep update
+run rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
 cd $COLCON_WS
 source $ROS_HOME/setup.sh
 run colcon build --mixin release --parallel-workers 2
