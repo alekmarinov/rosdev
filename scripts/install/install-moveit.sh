@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Check if env var is present and exits if not
+# expect_env ENV_VAR_NAME HINT_MESSAGE
 expect_env() {
     name_ref=$1
     value=$(eval "echo \"\$$name_ref\"")
@@ -11,6 +13,8 @@ expect_env() {
     fi
 }
 
+# Executes command with options and exit on failure
+# run COMMAND OPTIONS...
 run() {
     echo "$*"
     $*
@@ -20,17 +24,23 @@ run() {
     fi
 }
 
+# Executes command with sudo
+# sudorun COMMAND OPTIONS...
 sudorun() {
     run sudo $*
 }
 
-expect_env ROS_VERSION "source /opt/ros/humble/setup.bash"
-expect_env ROS_DISTRO "export ROS_DISTRO=hubmle"
+# Required env vars
+expect_env ROS_DISTRO "source /opt/ros/humble/setup.bash"
+ROS_HOME=/opt/ros/$ROS_DISTRO
+expect_env ROS_VERSION "source $ROS_HOME/setup.bash"
 
+# Installs prerequisites
 if [ ! -d /etc/ros/rosdep/sources.list.d/ ]; then
     sudorun rosdep init
 fi
-run rosdep update
+
+sudorun rosdep update
 sudorun apt update -y
 sudorun apt dist-upgrade -y
 sudorun apt install -y \
@@ -68,27 +78,21 @@ run python3 -m pip install -U \
   pytest-rerunfailures \
   pytest
 
-export COLCON_WS=~/ws_moveit2/
-# install moveit
-if [ ! -d $COLCON_WS/src/moveit2 ]; then
-    run cd $COLCON_WS/src
-    run git clone https://github.com/ros-planning/moveit2.git -b $ROS_DISTRO
-    for repo in moveit2/moveit2.repos $(f="moveit2/moveit2_$ROS_DISTRO.repos"; test -r $f && echo $f); do vcs import < "$repo"; done
-    run rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
-    run cd $COLCON_WS
-    run colcon build --event-handlers desktop_notification- status- --cmake-args -DCMAKE_BUILD_TYPE=Release --parallel-workers 1
-fi
-source $COLCON_WS/install/setup.bash
+# install moveit and tutorials
+COLCON_WS=~/ws_moveit2/
+run mkdir -p "$COLCON_WS/src"
+run cd $COLCON_WS/src
+run rm -rf moveit2_tutorials
+run git clone https://github.com/ros-planning/moveit2_tutorials -b $ROS_DISTRO --depth 1
+run vcs import --force < moveit2_tutorials/moveit2_tutorials.repos
+sudorun apt update -y 
+sudorun rosdep update
+sudorun rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
+cd $COLCON_WS
+source $ROS_HOME/setup.sh
+run colcon build --mixin release --parallel-workers 2
 
-# install tutorials
-if [ ! -d $COLCON_WS/src/moveit2_tutorials ]; then
-    run cd $COLCON_WS/src
-    run git clone https://github.com/ros-planning/moveit2_tutorials -b main --depth 1
-    run vcs import < moveit2_tutorials/moveit2_tutorials.repos
-    sudorun apt update -y && rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
-    cd $COLCON_WS
-    run colcon build --mixin release --parallel-workers 1
-fi
+echo "Updating $HOME/.bashrc"
 sed -i '/COLCON_WS/d' ~/.bashrc
 echo "export COLCON_WS=$COLCON_WS" >> ~/.bashrc
 echo "source \$COLCON_WS/install/setup.bash" >> ~/.bashrc
